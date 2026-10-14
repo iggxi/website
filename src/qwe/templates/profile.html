@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
+    <title>Страница авторизации</title>
 
     <style>
         body {
@@ -12,137 +12,142 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             margin: 0;
         }
 
-        .card {
+        .login-card {
             background-color: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 350px;
         }
 
-        h1, h3 {
+        .login-card h2 {
             text-align: center;
+            margin-bottom: 20px;
+            color: #333;
         }
 
-        p {
-            font-size: 18px;
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
         }
 
         button {
             width: 100%;
             padding: 10px;
-            margin-top: 10px;
+            background-color: #007bff;
+            color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
         }
 
-        .money-button {
-            background-color: #28a745;
-            color: white;
+        button:hover {
+            background-color: #0056b3;
         }
 
-        .ai-button {
-            background-color: #007bff;
-            color: white;
-        }
-
-        textarea {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            resize: vertical;
-        }
-
-        #aiAnswer {
-            margin-top: 15px;
-            white-space: pre-wrap;
-        }
-
-        .logout {
-            display: block;
-            margin-top: 20px;
+        .switch-link {
             text-align: center;
+            margin-top: 15px;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="card">
+    <div class="login-card">
+        <h2>Вход в систему</h2>
 
-        <h1>Личный кабинет</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Введите email"
+                    required
+                >
+            </div>
 
-        <p><strong>Имя:</strong> {{ name }}</p>
-        <p><strong>Фамилия:</strong> {{ surname }}</p>
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Баланс:</strong> {{ balance }} ₽</p>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Введите пароль"
+                    required
+                >
+            </div>
 
-        <form action="/give_money" method="post">
-            <button class="money-button" type="submit">
-                Отдать 100 ₽
-            </button>
+            <button type="submit">Войти</button>
         </form>
 
-        <hr>
+        <p id="message"></p>
 
-        <h3>Спросить нейросеть</h3>
-
-        <textarea
-            id="question"
-            rows="4"
-            placeholder="Напиши вопрос..."
-        ></textarea>
-
-        <button class="ai-button" id="aiButton">
-            Спросить
-        </button>
-
-        <p id="aiAnswer"></p>
-
-        <a class="logout" href="/logout">Выйти</a>
-
+        <div class="switch-link">
+            <a href="/">Зарегистрироваться</a>
+        </div>
     </div>
 
     <script>
-        const aiButton = document.getElementById("aiButton");
-        const aiAnswer = document.getElementById("aiAnswer");
+        const form = document.getElementById("loginForm");
+        const message = document.getElementById("message");
 
-        aiButton.addEventListener("click", async function() {
-            const question = document.getElementById("question").value;
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
 
-            if (!question.trim()) {
-                aiAnswer.textContent = "Введите вопрос";
-                return;
-            }
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
-            aiAnswer.textContent = "Нейросеть думает...";
+            const response = await fetch("/user_login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
 
-            try {
-                const response = await fetch("/ask_ai", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        question: question
-                    })
-                });
+            const data = await response.json();
 
-                const data = await response.json();
+            message.textContent = data.message;
 
-                aiAnswer.textContent = data.answer;
+            if (data.success) {
+                message.style.color = "green";
 
-            } catch (error) {
-                aiAnswer.textContent = "Ошибка при запросе к нейросети";
+                setTimeout(function() {
+                    window.location.href = "/profile";
+                }, 1000);
+            } else {
+                message.style.color = "red";
             }
         });
     </script>
